@@ -14,10 +14,13 @@ impl PacketListener {
     }
 
     pub fn handle_packets<F: Fn(Packet<'_>)>(&mut self, packet_handler: F) -> Result<()> {
-        while let Ok(packet) = self.listener.next_packet() {
-            packet_handler(packet);
+        loop {
+            match self.listener.next_packet() {
+                Ok(packet) => packet_handler(packet),
+                Err(pcap::Error::TimeoutExpired) => continue,
+                Err(pcap::Error::NoMorePackets) => return Ok(()),
+                Err(e) => return Err(e.into()),
+            }
         }
-
-        Ok(())
     }
 }
