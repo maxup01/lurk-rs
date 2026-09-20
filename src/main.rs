@@ -1,3 +1,7 @@
+use lurk_rs::listener::PacketListener;
+
 fn main() {
-    println!("Hello, world!");
+    let mut listener = PacketListener::init().unwrap();
+
+    let _ = listener.handle_packets(|_| {});
 }
