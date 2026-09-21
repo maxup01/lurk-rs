@@ -10,3 +10,7 @@ pub enum LurkError {
 }
 
 pub type Result<T> = std::result::Result<T, LurkError>;
+
+#[cfg(test)]
+#[path = "error_tests.rs"]
+mod tests;
