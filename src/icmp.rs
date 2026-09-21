@@ -11,6 +11,15 @@ pub struct IcmpPacket<'a> {
     pub body: IcmpBody<'a>,
 }
 
+pub fn icmp_packet(input: &[u8]) -> IResult<&[u8], IcmpPacket<'_>> {
+    let (input, header) = icmp_header(input)?;
+    let (input, body) = icmp_body(header.icmp_type, input)?;
+
+    let icmp_packet = IcmpPacket { header, body };
+
+    Ok((input, icmp_packet))
+}
+
 pub struct IcmpHeader {
     pub icmp_type: u8,
     pub code: u8,
