@@ -67,3 +67,47 @@ pub enum IcmpBody<'a> {
     },
     Other(&'a [u8]),
 }
+
+/// Parses everything after the 4-byte common header.
+pub fn icmp_body(icmp_type: u8, input: &[u8]) -> IResult<&[u8], IcmpBody<'_>> {
+    match IcmpType::try_from(icmp_type) {
+        Ok(IcmpType::EchoReply | IcmpType::EchoRequest) => {
+            let (input, identifier) = be_u16(input)?;
+            let (input, sequence) = be_u16(input)?;
+            let (input, data) = rest(input)?;
+
+            Ok((
+                input,
+                IcmpBody::Echo {
+                    identifier,
+                    sequence,
+                    data,
+                },
+            ))
+        }
+        Ok(
+            IcmpType::DestinationUnreachable | IcmpType::TimeExceeded | IcmpType::ParameterProblem,
+        ) => {
+            let (input, _unused) = take(4usize)(input)?;
+            let (input, quoted) = rest(input)?;
+
+            Ok((input, IcmpBody::Error { quoted }))
+        }
+        Ok(IcmpType::Redirect) => {
+            let (input, gateway) = be_u32(input)?;
+            let (input, _quoted) = rest(input)?;
+
+            Ok((
+                input,
+                IcmpBody::Redirect {
+                    gateway: Ipv4Addr::from(gateway),
+                },
+            ))
+        }
+        Err(_) => {
+            let (input, raw) = rest(input)?;
+
+            Ok((input, IcmpBody::Other(raw)))
+        }
+    }
+}
