@@ -11,20 +11,20 @@ const FIXED_HEADER_LEN: u8 = 20;
 
 #[derive(Debug)]
 pub struct IPv4Header<'a> {
-    version: u8,
-    ihl: u8,
-    dscp: u8,
-    ecn: u8,
-    total_length: u16,
-    identification: u16,
-    flags: u8,
-    fragment_offset: u16,
-    ttl: u8,
-    protocol: u8,
-    header_checksum: u16,
-    src: Ipv4Addr,
-    dst: Ipv4Addr,
-    options: &'a [u8],
+    pub version: u8,
+    pub ihl: u8,
+    pub dscp: u8,
+    pub ecn: u8,
+    pub total_length: u16,
+    pub identification: u16,
+    pub flags: u8,
+    pub fragment_offset: u16,
+    pub ttl: u8,
+    pub protocol: u8,
+    pub header_checksum: u16,
+    pub src: Ipv4Addr,
+    pub dst: Ipv4Addr,
+    pub options: &'a [u8],
 }
 
 impl IPv4Header<'_> {
