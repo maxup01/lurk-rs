@@ -1,6 +1,7 @@
 use nom::{
     IResult,
     bytes::complete::take,
+    combinator::rest,
     error::{Error, ErrorKind},
     number::complete::{be_u8, be_u16, be_u32},
 };
@@ -9,6 +10,13 @@ use std::net::Ipv4Addr;
 pub struct IPv4Packet<'a> {
     pub header: IPv4Header<'a>,
     pub payload: &'a [u8],
+}
+
+pub fn ipv4_packet(input: &[u8]) -> IResult<&[u8], IPv4Packet<'_>> {
+    let (input, header) = ipv4_header(input)?;
+    let (input, payload) = rest(input)?;
+
+    Ok((input, IPv4Packet { header, payload }))
 }
 
 /// Size of the fixed portion of the header, before any options.
