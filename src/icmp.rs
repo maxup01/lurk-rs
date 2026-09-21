@@ -6,6 +6,11 @@ use nom::{
 };
 use std::net::Ipv4Addr;
 
+pub struct IcmpPacket<'a> {
+    pub header: IcmpHeader,
+    pub body: IcmpBody<'a>,
+}
+
 pub struct IcmpHeader {
     pub icmp_type: u8,
     pub code: u8,
