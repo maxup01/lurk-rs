@@ -1,7 +1,6 @@
 use nom::{
     IResult,
     bytes::complete::take,
-    combinator::rest,
     error::{Error, ErrorKind},
     number::complete::{be_u8, be_u16, be_u32},
 };
@@ -14,7 +13,10 @@ pub struct IPv4Packet<'a> {
 
 pub fn ipv4_packet(input: &[u8]) -> IResult<&[u8], IPv4Packet<'_>> {
     let (input, header) = ipv4_header(input)?;
-    let (input, payload) = rest(input)?;
+
+    // total_length delimits the datagram: anything beyond it is Ethernet
+    // padding added to reach the 60-byte minimum frame size, not payload.
+    let (input, payload) = take(usize::from(header.payload_len()))(input)?;
 
     Ok((input, IPv4Packet { header, payload }))
 }
@@ -104,3 +106,7 @@ pub fn ipv4_header(input: &[u8]) -> IResult<&[u8], IPv4Header<'_>> {
         },
     ))
 }
+
+#[cfg(test)]
+#[path = "ipv4_tests.rs"]
+mod tests;
