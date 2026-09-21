@@ -33,3 +33,7 @@ pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
         },
     ))
 }
+
+#[cfg(test)]
+#[path = "ethernet_tests.rs"]
+mod tests;
