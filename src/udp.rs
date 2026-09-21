@@ -1,5 +1,10 @@
 use nom::{IResult, number::complete::be_u16};
 
+pub struct UdpPacket<'a> {
+    pub header: UdpHeader,
+    pub payload: &'a [u8],
+}
+
 pub struct UdpHeader {
     pub src_port: u16,
     pub dst_port: u16,
