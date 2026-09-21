@@ -1,6 +1,8 @@
 use nom::{
     IResult,
-    number::complete::{be_u8, be_u16},
+    bytes::complete::take,
+    combinator::rest,
+    number::complete::{be_u8, be_u16, be_u32},
 };
 use std::net::Ipv4Addr;
 
@@ -33,6 +35,22 @@ pub enum IcmpType {
     EchoRequest = 8,
     TimeExceeded = 11,
     ParameterProblem = 12,
+}
+
+impl TryFrom<u8> for IcmpType {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, <Self as TryFrom<u8>>::Error> {
+        match value {
+            0 => Ok(Self::EchoReply),
+            3 => Ok(Self::DestinationUnreachable),
+            5 => Ok(Self::Redirect),
+            8 => Ok(Self::EchoRequest),
+            11 => Ok(Self::TimeExceeded),
+            12 => Ok(Self::ParameterProblem),
+            other => Err(other),
+        }
+    }
 }
 
 pub enum IcmpBody<'a> {
