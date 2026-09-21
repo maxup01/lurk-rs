@@ -18,8 +18,16 @@ impl PacketListener {
         Ok(Self { listener })
     }
 
-    pub fn handle_packets<F: Fn(Packet<'_>)>(&mut self, packet_handler: F) -> Result<()> {
+    pub fn handle_packets<F: Fn(Packet<'_>)>(
+        &mut self,
+        packet_handler: F,
+        rx: Receiver<Signal>,
+    ) -> Result<()> {
         loop {
+            if let Ok(Signal::Stop) = rx.try_recv() {
+                return Ok(());
+            }
+
             match self.listener.next_packet() {
                 Ok(packet) => packet_handler(packet),
                 Err(pcap::Error::TimeoutExpired) => continue,
