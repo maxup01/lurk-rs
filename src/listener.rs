@@ -1,5 +1,10 @@
 use crate::error::{LurkError, Result};
+use crossbeam_channel::Receiver;
 use pcap::{Active, Capture, Device, Packet};
+
+pub enum Signal {
+    Stop,
+}
 
 pub struct PacketListener {
     listener: Capture<Active>,
