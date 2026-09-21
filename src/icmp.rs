@@ -24,6 +24,17 @@ pub fn icmp_header(input: &[u8]) -> IResult<&[u8], IcmpHeader> {
     Ok((input, header))
 }
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IcmpType {
+    EchoReply = 0,
+    DestinationUnreachable = 3,
+    Redirect = 5,
+    EchoRequest = 8,
+    TimeExceeded = 11,
+    ParameterProblem = 12,
+}
+
 pub enum IcmpBody<'a> {
     Echo {
         identifier: u16,
