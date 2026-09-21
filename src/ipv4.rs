@@ -6,6 +6,11 @@ use nom::{
 };
 use std::net::Ipv4Addr;
 
+pub struct IPv4Packet<'a> {
+    pub header: IPv4Header<'a>,
+    pub payload: &'a [u8],
+}
+
 /// Size of the fixed portion of the header, before any options.
 const FIXED_HEADER_LEN: u8 = 20;
 
