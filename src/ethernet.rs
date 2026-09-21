@@ -1,21 +1,23 @@
-use nom::{IResult, bytes::complete::take, number::complete::be_u16};
+use nom::{IResult, bytes::complete::take, combinator::rest, number::complete::be_u16};
 
-pub struct EthernetPacket {
-    header: EthernetHeader,
-    payload: Vec<u8>,
+#[derive(Debug)]
+pub struct EthernetPacket<'a> {
+    pub header: EthernetHeader,
+    pub payload: &'a [u8],
 }
 
-pub fn ethernet_packet(input: &[u8]) -> IResult<&[u8], EthernetPacket> {
+pub fn ethernet_packet(input: &[u8]) -> IResult<&[u8], EthernetPacket<'_>> {
     let (input, header) = ethernet_header(input)?;
-    let payload = input[14..].to_vec();
+    let (input, payload) = rest(input)?;
 
     Ok((input, EthernetPacket { header, payload }))
 }
 
+#[derive(Debug)]
 pub struct EthernetHeader {
-    dst: [u8; 6],
-    src: [u8; 6],
-    ethertype: u16,
+    pub dst: [u8; 6],
+    pub src: [u8; 6],
+    pub ethertype: u16,
 }
 
 pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
