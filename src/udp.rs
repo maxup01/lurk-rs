@@ -1,8 +1,17 @@
-use nom::{IResult, number::complete::be_u16};
+use nom::{IResult, combinator::rest, number::complete::be_u16};
 
 pub struct UdpPacket<'a> {
     pub header: UdpHeader,
     pub payload: &'a [u8],
+}
+
+pub fn udp_packet(input: &[u8]) -> IResult<&[u8], UdpPacket<'_>> {
+    let (input, header) = udp_header(input)?;
+    let (input, payload) = rest(input)?;
+
+    let udp_packet = UdpPacket { header, payload };
+
+    Ok((input, udp_packet))
 }
 
 pub struct UdpHeader {
