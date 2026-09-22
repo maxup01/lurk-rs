@@ -125,3 +125,7 @@ pub fn icmp_body(icmp_type: u8, input: &[u8]) -> IResult<&[u8], IcmpBody<'_>> {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "icmp_tests.rs"]
+mod tests;
