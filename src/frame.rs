@@ -1,4 +1,11 @@
-use crate::{icmp::IcmpPacket, ipv4::IPv4Header, tcp::TcpPacket, udp::UdpPacket};
+use crate::{
+    ethernet::EthernetHeader, icmp::IcmpPacket, ipv4::IPv4Header, tcp::TcpPacket, udp::UdpPacket,
+};
+
+pub struct Frame<'a> {
+    pub ethernet: EthernetHeader,
+    pub network: Network<'a>,
+}
 
 pub enum Network<'a> {
     Ipv4 {
