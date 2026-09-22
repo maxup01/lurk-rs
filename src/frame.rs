@@ -1,3 +1,5 @@
+use core::convert::TryFrom;
+
 use crate::{
     ethernet::{EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
@@ -18,15 +20,17 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
     let network = match eth.header.ethertype {
         0x0800 => {
             let (_, ip) = ipv4_packet(eth.payload)?;
-            let transport = match ip.header.protocol {
-                1 => Transport::Icmp(icmp_packet(ip.payload)?.1),
-                6 => Transport::Tcp(tcp_packet(ip.payload)?.1),
-                17 => Transport::Udp(udp_packet(ip.payload)?.1),
-                protocol => Transport::Unsupported {
+
+            let transport = match TransportKind::try_from(ip.header.protocol) {
+                Ok(TransportKind::Icmp) => Transport::Icmp(icmp_packet(ip.payload)?.1),
+                Ok(TransportKind::Tcp) => Transport::Tcp(tcp_packet(ip.payload)?.1),
+                Ok(TransportKind::Udp) => Transport::Udp(udp_packet(ip.payload)?.1),
+                Err(protocol) => Transport::Unsupported {
                     protocol,
                     payload: ip.payload,
                 },
             };
+
             Network::Ipv4 {
                 header: ip.header,
                 transport,
