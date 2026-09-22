@@ -55,6 +55,19 @@ pub enum TransportKind {
     Udp = 17,
 }
 
+impl TryFrom<u8> for TransportKind {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, <Self as TryFrom<u8>>::Error> {
+        match value {
+            1 => Ok(Self::Icmp),
+            6 => Ok(Self::Tcp),
+            17 => Ok(Self::Udp),
+            other => Err(other),
+        }
+    }
+}
+
 pub enum Network<'a> {
     Ipv4 {
         header: IPv4Header<'a>,
