@@ -1,6 +1,7 @@
 use nom::{
     IResult,
     bytes::complete::take,
+    combinator::rest,
     error::{Error, ErrorKind},
     number::complete::{be_u16, be_u32},
 };
@@ -8,6 +9,15 @@ use nom::{
 pub struct TcpPacket<'a> {
     pub header: TcpHeader<'a>,
     pub payload: &'a [u8],
+}
+
+pub fn tcp_packet(input: &[u8]) -> IResult<&[u8], TcpPacket<'_>> {
+    let (input, header) = tcp_header(input)?;
+    let (input, payload) = rest(input)?;
+
+    let tcp_packet = TcpPacket { header, payload };
+
+    Ok((input, tcp_packet))
 }
 
 /// Size of the fixed portion of the header, before any options.
