@@ -86,3 +86,7 @@ pub fn tcp_header(input: &[u8]) -> IResult<&[u8], TcpHeader<'_>> {
         },
     ))
 }
+
+#[cfg(test)]
+#[path = "tcp_tests.rs"]
+mod tests;
