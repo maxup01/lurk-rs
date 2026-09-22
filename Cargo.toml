@@ -8,3 +8,4 @@ pcap = { version = "2.5.0" }
 nom = { version = "8.0.0" }
 thiserror = { version = "2.0.0" }
 crossbeam-channel = { version = "0.5.0" }
+ratatui = { version = "0.30.0" }
