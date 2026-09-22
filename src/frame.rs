@@ -47,6 +47,14 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
     ))
 }
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransportKind {
+    Icmp = 1,
+    Tcp = 6,
+    Udp = 17,
+}
+
 pub enum Network<'a> {
     Ipv4 {
         header: IPv4Header<'a>,
