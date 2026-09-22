@@ -5,6 +5,11 @@ use nom::{
     number::complete::{be_u16, be_u32},
 };
 
+pub struct TcpPacket<'a> {
+    pub header: TcpHeader<'a>,
+    pub payload: &'a [u8],
+}
+
 /// Size of the fixed portion of the header, before any options.
 const FIXED_HEADER_LEN: u8 = 20;
 
