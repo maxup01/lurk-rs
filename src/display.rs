@@ -1,8 +1,6 @@
 use crate::{
-    ethernet::EthernetHeader,
     frame::{Frame, Network, Transport},
     icmp::{IcmpBody, IcmpPacket},
-    ipv4::IPv4Header,
     tcp::TcpPacket,
 };
 use ratatui::{
