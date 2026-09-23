@@ -8,6 +8,12 @@ pub enum LurkError {
     #[error("no suitable device found for packet capture")]
     NoSuitableDevice,
 
+    #[error("no device named '{0}'")]
+    DeviceNotFound(String),
+
+    #[error("device '{device}' has link type {link_type}, but only Ethernet is supported")]
+    UnsupportedLinkType { device: String, link_type: i32 },
+
     #[error("terminal I/O failed: {0}")]
     Io(#[from] std::io::Error),
 }
