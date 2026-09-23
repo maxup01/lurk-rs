@@ -7,6 +7,9 @@ pub enum LurkError {
 
     #[error("no suitable device found for packet capture")]
     NoSuitableDevice,
+
+    #[error("terminal I/O failed: {0}")]
+    Io(#[from] std::io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, LurkError>;
