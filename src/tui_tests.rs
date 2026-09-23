@@ -1,8 +1,6 @@
 use super::*;
-
-use ratatui::{Terminal, backend::TestBackend};
-
 use crate::{display::frame_row, frame::parse_frame};
+use ratatui::{Terminal, backend::TestBackend};
 
 /// A complete frame: broadcast Ethernet carrying IPv4 (total length 40, TCP)
 /// carrying a bare PSH+ACK segment from 192.168.0.1:443 to 192.168.0.199:54321.
