@@ -5,7 +5,9 @@ pub enum LurkError {
     #[error("packet capture failed: {0}")]
     Pcap(#[from] pcap::Error),
 
-    #[error("no suitable device found for packet capture")]
+    #[error(
+        "no Ethernet capture device found: tunnel and loopback interfaces carry no Ethernet header and are not supported"
+    )]
     NoSuitableDevice,
 
     #[error("no device named '{0}'")]
