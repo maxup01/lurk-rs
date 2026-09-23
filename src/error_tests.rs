@@ -30,11 +30,25 @@ fn pcap_display_keeps_the_underlying_message() {
 }
 
 #[test]
-fn no_suitable_device_displays_its_own_message() {
-    assert_eq!(
-        LurkError::NoSuitableDevice.to_string(),
-        "no suitable device found for packet capture"
-    );
+fn no_suitable_device_explains_why_nothing_was_opened() {
+    let message = LurkError::NoSuitableDevice.to_string();
+
+    assert!(message.contains("Ethernet"), "{message}");
+    assert!(message.contains("tunnel"), "{message}");
+}
+
+#[test]
+fn device_errors_name_the_device() {
+    let missing = LurkError::DeviceNotFound("en9".to_string()).to_string();
+    assert!(missing.contains("en9"), "{missing}");
+
+    let wrong_link = LurkError::UnsupportedLinkType {
+        device: "utun0".to_string(),
+        link_type: 0,
+    }
+    .to_string();
+    assert!(wrong_link.contains("utun0"), "{wrong_link}");
+    assert!(wrong_link.contains('0'), "{wrong_link}");
 }
 
 #[test]
