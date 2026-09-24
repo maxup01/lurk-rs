@@ -34,6 +34,11 @@ pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
     ))
 }
 
+#[repr(u16)]
+pub enum EtherType {
+    IPv4 = 0x0800,
+}
+
 #[cfg(test)]
 #[path = "ethernet_tests.rs"]
 mod tests;
