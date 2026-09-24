@@ -39,6 +39,17 @@ pub enum EtherType {
     IPv4 = 0x0800,
 }
 
+impl TryFrom<u16> for EtherType {
+    type Error = u16;
+
+    fn try_from(value: u16) -> Result<Self, <Self as TryFrom<u16>>::Error> {
+        match value {
+            0x0800 => Ok(Self::IPv4),
+            other => Err(other),
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "ethernet_tests.rs"]
 mod tests;
