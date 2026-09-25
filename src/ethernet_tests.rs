@@ -25,7 +25,7 @@ fn parses_header_fields() {
 fn ethertype_is_read_big_endian() {
     let (_, header) = ethernet_header(FRAME).unwrap();
 
-    assert_eq!(header.ethertype, 0x0800);
+    assert_eq!(header.ethertype, EtherType::IPv4);
 }
 
 #[test]

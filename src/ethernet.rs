@@ -62,6 +62,7 @@ impl TryFrom<u16> for EtherType {
             0x0001 => Ok(Self::Ethernet),
             0x0800 => Ok(Self::IPv4),
             0x0806 => Ok(Self::ARP),
+            0x86dd => Ok(Self::IPv6),
             other => Err(other),
         }
     }
