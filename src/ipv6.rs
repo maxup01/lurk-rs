@@ -1,4 +1,5 @@
 pub struct IPv6Header {
+    /// Version (4 bits) | Traffic Class (8 bits) | Flow Label (20 bits).
     pub vtf: u32,
     pub payload_length: u16,
     pub next_header: u8,
