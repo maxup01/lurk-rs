@@ -7,3 +7,8 @@ pub struct IPv6Header {
     pub src_address: [u8; 16],
     pub dst_address: [u8; 16],
 }
+
+pub struct IPv6Packet<'a> {
+    pub header: IPv6Header,
+    pub payload: &'a [u8],
+}
