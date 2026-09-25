@@ -1,13 +1,13 @@
-use core::convert::TryFrom;
-
 use crate::{
     arp::{ARPHeader, arp_packet},
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
+    ipv6::IPv6Packet,
     tcp::{TcpPacket, tcp_packet},
     udp::{UdpPacket, udp_packet},
 };
+use core::convert::TryFrom;
 use nom::IResult;
 
 pub struct Frame<'a> {
@@ -90,6 +90,9 @@ pub enum Network<'a> {
     },
     ARP {
         header: ARPHeader,
+    },
+    Ipv6 {
+        packet: IPv6Packet<'a>,
     },
     Unsupported {
         ethertype: u16,

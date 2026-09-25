@@ -58,17 +58,18 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             protocol_span(transport),
             transport_info(transport),
         ),
-        Network::Unsupported { ethertype, payload } => (
-            mac(&frame.ethernet.src),
-            mac(&frame.ethernet.dst),
-            ethertype_span(*ethertype),
-            Line::from(Span::styled(format!("{} bytes", payload.len()), dim())),
-        ),
         Network::ARP { header } => (
             header.spa.to_string(),
             header.tpa.to_string(),
             ethertype_span(0x0806),
             arp_info(header),
+        ),
+        Network::Ipv6 { packet } => todo!(),
+        Network::Unsupported { ethertype, payload } => (
+            mac(&frame.ethernet.src),
+            mac(&frame.ethernet.dst),
+            ethertype_span(*ethertype),
+            Line::from(Span::styled(format!("{} bytes", payload.len()), dim())),
         ),
     };
 
