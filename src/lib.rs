@@ -1,3 +1,4 @@
+pub mod arp;
 pub mod display;
 pub mod error;
 pub mod ethernet;
