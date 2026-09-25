@@ -1,7 +1,7 @@
 use core::convert::TryFrom;
 
 use crate::{
-    ethernet::{EthernetHeader, ethernet_packet},
+    ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
     tcp::{TcpPacket, tcp_packet},
@@ -18,7 +18,11 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
     let (input, eth) = ethernet_packet(input)?;
 
     let network = match eth.header.ethertype {
-        0x0800 => {
+        EtherType::Ethernet => Network::Ethernet {
+            header: eth.header.clone(),
+            payload: eth.payload,
+        },
+        EtherType::IPv4 => {
             let (_, ip) = ipv4_packet(eth.payload)?;
 
             let transport = match TransportKind::try_from(ip.header.protocol) {
@@ -36,10 +40,6 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
                 transport,
             }
         }
-        ethertype => Network::Unsupported {
-            ethertype,
-            payload: eth.payload,
-        },
     };
 
     Ok((
@@ -73,6 +73,10 @@ impl TryFrom<u8> for TransportKind {
 }
 
 pub enum Network<'a> {
+    Ethernet {
+        header: EthernetHeader,
+        payload: &'a [u8],
+    },
     Ipv4 {
         header: IPv4Header<'a>,
         transport: Transport<'a>,

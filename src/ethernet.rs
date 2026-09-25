@@ -1,4 +1,10 @@
-use nom::{IResult, bytes::complete::take, combinator::rest, number::complete::be_u16};
+use nom::{
+    IResult,
+    bytes::complete::take,
+    combinator::rest,
+    error::{Error, ErrorKind},
+    number::complete::be_u16,
+};
 
 #[derive(Debug)]
 pub struct EthernetPacket<'a> {
@@ -13,17 +19,22 @@ pub fn ethernet_packet(input: &[u8]) -> IResult<&[u8], EthernetPacket<'_>> {
     Ok((input, EthernetPacket { header, payload }))
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct EthernetHeader {
     pub dst: [u8; 6],
     pub src: [u8; 6],
-    pub ethertype: u16,
+    pub ethertype: EtherType,
 }
 
 pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
     let (input, dst) = take(6usize)(input)?;
     let (input, src) = take(6usize)(input)?;
+
     let (input, ethertype) = be_u16(input)?;
+    let Ok(ethertype) = EtherType::try_from(ethertype) else {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Verify)));
+    };
+
     Ok((
         input,
         EthernetHeader {
@@ -34,6 +45,7 @@ pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
     ))
 }
 
+#[derive(PartialEq, Eq, Debug, Clone)]
 #[repr(u16)]
 pub enum EtherType {
     Ethernet = 0x0001,
