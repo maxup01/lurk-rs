@@ -6,7 +6,7 @@ use nom::{
 use std::net::Ipv4Addr;
 
 #[derive(Debug)]
-pub struct ArpPacket {
+pub struct ARPHeader {
     pub htype: u16,
     pub ptype: u16,
     pub hlen: u8,
@@ -18,7 +18,7 @@ pub struct ArpPacket {
     pub tpa: Ipv4Addr,
 }
 
-pub fn arp_packet(input: &[u8]) -> IResult<&[u8], ArpPacket> {
+pub fn arp_packet(input: &[u8]) -> IResult<&[u8], ARPHeader> {
     let (input, htype) = be_u16(input)?;
     let (input, ptype) = be_u16(input)?;
     let (input, hlen) = be_u8(input)?;
@@ -31,7 +31,7 @@ pub fn arp_packet(input: &[u8]) -> IResult<&[u8], ArpPacket> {
 
     Ok((
         input,
-        ArpPacket {
+        ARPHeader {
             htype,
             ptype,
             hlen,

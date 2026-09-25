@@ -1,7 +1,7 @@
 use core::convert::TryFrom;
 
 use crate::{
-    arp::ArpPacket,
+    arp::ARPHeader,
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
@@ -84,7 +84,7 @@ pub enum Network<'a> {
         transport: Transport<'a>,
     },
     ARP {
-        header: ArpPacket,
+        header: ARPHeader,
     },
     Unsupported {
         ethertype: u16,
