@@ -1,6 +1,7 @@
 use nom::{
     IResult,
     bytes::complete::take,
+    combinator::rest,
     number::complete::{be_u8, be_u16, be_u32},
 };
 
@@ -42,4 +43,11 @@ pub fn ipv6_header(input: &[u8]) -> IResult<&[u8], IPv6Header> {
 pub struct IPv6Packet<'a> {
     pub header: IPv6Header,
     pub payload: &'a [u8],
+}
+
+pub fn ipv6_packet(input: &[u8]) -> IResult<&[u8], IPv6Packet<'_>> {
+    let (input, header) = ipv6_header(input)?;
+    let (input, payload) = rest(input)?;
+
+    Ok((input, IPv6Packet { header, payload }))
 }
