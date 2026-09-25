@@ -63,6 +63,7 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             ethertype_span(*ethertype),
             Line::from(Span::styled(format!("{} bytes", payload.len()), dim())),
         ),
+        Network::ARP { header } => todo!(),
     };
 
     Row::new(vec![
