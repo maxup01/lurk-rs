@@ -1,4 +1,5 @@
 use crate::{
+    arp::ARPHeader,
     frame::{Frame, Network, Transport},
     icmp::{IcmpBody, IcmpPacket},
     tcp::TcpPacket,
@@ -63,7 +64,12 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             ethertype_span(*ethertype),
             Line::from(Span::styled(format!("{} bytes", payload.len()), dim())),
         ),
-        Network::ARP { header } => todo!(),
+        Network::ARP { header } => (
+            header.spa.to_string(),
+            header.tpa.to_string(),
+            ethertype_span(0x0806),
+            arp_info(header),
+        ),
     };
 
     Row::new(vec![
@@ -129,6 +135,20 @@ fn ethertype_span(ethertype: u16) -> Span<'static> {
     };
 
     Span::styled(name, Style::new().fg(colour).add_modifier(Modifier::BOLD))
+}
+
+fn arp_info(header: &ARPHeader) -> Line<'static> {
+    match header.oper {
+        1 => Line::from(Span::styled(
+            format!("Who has {}? Tell {}", header.tpa, header.spa),
+            dim(),
+        )),
+        2 => Line::from(Span::styled(
+            format!("{} is at {}", header.spa, mac(&header.sha)),
+            dim(),
+        )),
+        oper => Line::from(Span::styled(format!("oper {oper}"), dim())),
+    }
 }
 
 fn transport_info(transport: &Transport<'_>) -> Line<'static> {
