@@ -64,7 +64,7 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             ethertype_span(0x0806),
             arp_info(header),
         ),
-        Network::Ipv6 { packet } => todo!(),
+        Network::Ipv6 { header, transport } => todo!(),
         Network::Unsupported { ethertype, payload } => (
             mac(&frame.ethernet.src),
             mac(&frame.ethernet.dst),

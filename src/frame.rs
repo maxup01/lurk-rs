@@ -3,7 +3,7 @@ use crate::{
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
-    ipv6::IPv6Packet,
+    ipv6::IPv6Header,
     tcp::{TcpPacket, tcp_packet},
     udp::{UdpPacket, udp_packet},
 };
@@ -92,7 +92,8 @@ pub enum Network<'a> {
         header: ARPHeader,
     },
     Ipv6 {
-        packet: IPv6Packet<'a>,
+        header: IPv6Header,
+        transport: Transport<'a>,
     },
     Unsupported {
         ethertype: u16,
