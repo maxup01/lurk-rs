@@ -45,7 +45,7 @@ pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
     ))
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 #[repr(u16)]
 pub enum EtherType {
     Ethernet = 0x0001,

@@ -45,7 +45,12 @@ const ACK: u16 = 0x010;
 /// capture buffer and can be kept in the UI's scrollback.
 pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
     let (source, destination, protocol, info) = match &frame.network {
-        Network::Ethernet { header, payload } => todo!(),
+        Network::Ethernet { header, payload } => (
+            mac(&header.src),
+            mac(&header.dst),
+            ethertype_span(header.ethertype as u16),
+            Line::from(Span::styled(format!("{} bytes", payload.len()), dim())),
+        ),
         Network::Ipv4 { header, transport } => (
             endpoint(header.src, source_port(transport)),
             endpoint(header.dst, destination_port(transport)),
