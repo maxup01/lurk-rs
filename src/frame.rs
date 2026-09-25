@@ -46,6 +46,7 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
 
             Network::ARP { header: arp }
         }
+        EtherType::IPv6 => todo!(),
     };
 
     Ok((
