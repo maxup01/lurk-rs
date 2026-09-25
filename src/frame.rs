@@ -3,7 +3,7 @@ use crate::{
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
-    ipv6::IPv6Header,
+    ipv6::{IPv6Header, ipv6_packet},
     tcp::{TcpPacket, tcp_packet},
     udp::{UdpPacket, udp_packet},
 };
@@ -46,7 +46,24 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
 
             Network::ARP { header: arp }
         }
-        EtherType::IPv6 => todo!(),
+        EtherType::IPv6 => {
+            let (_, ip) = ipv6_packet(eth.payload)?;
+
+            let transport = match TransportKind::try_from(ip.protocol) {
+                Ok(TransportKind::Icmp) => Transport::Icmp(icmp_packet(ip.payload)?.1),
+                Ok(TransportKind::Tcp) => Transport::Tcp(tcp_packet(ip.payload)?.1),
+                Ok(TransportKind::Udp) => Transport::Udp(udp_packet(ip.payload)?.1),
+                Err(protocol) => Transport::Unsupported {
+                    protocol,
+                    payload: ip.payload,
+                },
+            };
+
+            Network::Ipv6 {
+                header: ip.header,
+                transport,
+            }
+        }
     };
 
     Ok((
