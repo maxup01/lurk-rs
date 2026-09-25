@@ -36,6 +36,7 @@ pub fn ethernet_header(input: &[u8]) -> IResult<&[u8], EthernetHeader> {
 
 #[repr(u16)]
 pub enum EtherType {
+    Ethernet = 0x0001,
     IPv4 = 0x0800,
 }
 
@@ -44,6 +45,7 @@ impl TryFrom<u16> for EtherType {
 
     fn try_from(value: u16) -> Result<Self, <Self as TryFrom<u16>>::Error> {
         match value {
+            0x0001 => Ok(Self::Ethernet),
             0x0800 => Ok(Self::IPv4),
             other => Err(other),
         }
