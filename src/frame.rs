@@ -1,7 +1,7 @@
 use core::convert::TryFrom;
 
 use crate::{
-    arp::ARPHeader,
+    arp::{ARPHeader, arp_packet},
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
@@ -41,7 +41,11 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
                 transport,
             }
         }
-        EtherType::ARP => todo!(),
+        EtherType::ARP => {
+            let (_, arp) = arp_packet(eth.payload)?;
+
+            Network::ARP { header: arp }
+        }
     };
 
     Ok((
