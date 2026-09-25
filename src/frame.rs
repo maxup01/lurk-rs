@@ -40,6 +40,7 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
                 transport,
             }
         }
+        EtherType::ARP => todo!(),
     };
 
     Ok((
