@@ -64,7 +64,12 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             ethertype_span(0x0806),
             arp_info(header),
         ),
-        Network::Ipv6 { header, transport } => todo!(),
+        Network::Ipv6 { header, transport } => (
+            ipv6_endpoint(header.src_address, source_port(transport)),
+            ipv6_endpoint(header.dst_address, destination_port(transport)),
+            protocol_span(transport),
+            transport_info(transport),
+        ),
         Network::Unsupported { ethertype, payload } => (
             mac(&frame.ethernet.src),
             mac(&frame.ethernet.dst),
@@ -88,6 +93,15 @@ fn dim() -> Style {
 fn endpoint(address: std::net::Ipv4Addr, port: Option<u16>) -> String {
     match port {
         Some(port) => format!("{address}:{port}"),
+        None => address.to_string(),
+    }
+}
+
+// Bracketed so the port's colon can't be mistaken for one of the address's
+// own — the same convention curl/browsers use for IPv6 host:port pairs.
+fn ipv6_endpoint(address: std::net::Ipv6Addr, port: Option<u16>) -> String {
+    match port {
+        Some(port) => format!("[{address}]:{port}"),
         None => address.to_string(),
     }
 }
