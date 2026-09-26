@@ -3,7 +3,7 @@ use crate::{
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
     ipv4::{IPv4Header, ipv4_packet},
-    ipv6::{IPv6Header, ipv6_packet},
+    ipv6::{ExtensionHeaders, IPv6Header, ipv6_packet},
     tcp::{TcpPacket, tcp_packet},
     udp::{UdpPacket, udp_packet},
 };
@@ -61,6 +61,7 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
 
             Network::Ipv6 {
                 header: ip.header,
+                extensions: ip.extensions,
                 transport,
             }
         }
@@ -110,6 +111,7 @@ pub enum Network<'a> {
     },
     Ipv6 {
         header: IPv6Header,
+        extensions: ExtensionHeaders,
         transport: Transport<'a>,
     },
     Unsupported {
