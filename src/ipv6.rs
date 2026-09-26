@@ -1,6 +1,7 @@
 use nom::{
     IResult,
     bytes::complete::take,
+    error::{Error, ErrorKind},
     number::complete::{be_u8, be_u16, be_u32},
 };
 use std::net::Ipv6Addr;
@@ -17,10 +18,56 @@ pub struct IPv6Header {
 
 pub struct IPv6Packet<'a> {
     pub header: IPv6Header,
+    /// The extension headers the chain passed through, in the order they
+    /// appeared.
+    pub extensions: ExtensionHeaders,
     /// The transport protocol the extension header chain resolves to, using
     /// the same numbering as IPv4's `protocol` field.
     pub protocol: u8,
     pub payload: &'a [u8],
+}
+
+/// Cap on chain length. RFC 8200 expects each extension header to appear at
+/// most once, so anything longer than this is malformed or hostile.
+pub const MAX_EXTENSION_HEADERS: usize = 8;
+
+/// The extension headers found in one chain.
+///
+/// Fixed size and `Copy`, so walking the chain costs no allocation on the
+/// capture path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct ExtensionHeaders {
+    found: [Option<ExtensionHeader>; MAX_EXTENSION_HEADERS],
+    count: usize,
+}
+
+impl ExtensionHeaders {
+    /// Returns false when the chain is already at capacity.
+    fn push(&mut self, header: ExtensionHeader) -> bool {
+        if self.count == MAX_EXTENSION_HEADERS {
+            return false;
+        }
+
+        self.found[self.count] = Some(header);
+        self.count += 1;
+        true
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ExtensionHeader> + '_ {
+        self.found[..self.count].iter().flatten().copied()
+    }
+
+    pub fn contains(&self, header: ExtensionHeader) -> bool {
+        self.iter().any(|found| found == header)
+    }
+
+    pub fn len(&self) -> usize {
+        self.count
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
 }
 
 /// Header types that can appear in the `next_header` chain before it reaches a
