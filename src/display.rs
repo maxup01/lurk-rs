@@ -2,6 +2,7 @@ use crate::{
     arp::ARPHeader,
     frame::{Frame, Network, Transport},
     icmp::{IcmpBody, IcmpPacket},
+    ipv6::{ExtensionHeader, ExtensionHeaders},
     tcp::TcpPacket,
 };
 use ratatui::{
@@ -64,11 +65,15 @@ pub fn frame_row(frame: &Frame<'_>) -> Row<'static> {
             ethertype_span(0x0806),
             arp_info(header),
         ),
-        Network::Ipv6 { header, transport } => (
+        Network::Ipv6 {
+            header,
+            extensions,
+            transport,
+        } => (
             ipv6_endpoint(header.src_address, source_port(transport)),
             ipv6_endpoint(header.dst_address, destination_port(transport)),
             protocol_span(transport),
-            transport_info(transport),
+            ipv6_info(extensions, transport),
         ),
         Network::Unsupported { ethertype, payload } => (
             mac(&frame.ethernet.src),
@@ -164,6 +169,36 @@ fn arp_info(header: &ARPHeader) -> Line<'static> {
         )),
         oper => Line::from(Span::styled(format!("oper {oper}"), dim())),
     }
+}
+
+/// The transport summary, with the extension header chain appended.
+fn ipv6_info(extensions: &ExtensionHeaders, transport: &Transport<'_>) -> Line<'static> {
+    let mut line = transport_info(transport);
+
+    if extensions.is_empty() {
+        return line;
+    }
+
+    line.spans.push(Span::styled(" (", dim()));
+
+    for (position, extension) in extensions.iter().enumerate() {
+        if position > 0 {
+            line.spans.push(Span::styled(" ", dim()));
+        }
+
+        let (name, colour) = match extension {
+            ExtensionHeader::Fragment => ("frag", Color::Yellow),
+            ExtensionHeader::Routing => ("routing", Color::Red),
+            ExtensionHeader::HopByHop => ("hop-by-hop", Color::DarkGray),
+            ExtensionHeader::DestinationOptions => ("dst-opts", Color::DarkGray),
+        };
+
+        line.spans.push(Span::styled(name, Style::new().fg(colour)));
+    }
+
+    line.spans.push(Span::styled(")", dim()));
+
+    line
 }
 
 fn transport_info(transport: &Transport<'_>) -> Line<'static> {
