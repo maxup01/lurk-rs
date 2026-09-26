@@ -37,6 +37,20 @@ pub enum ExtensionHeader {
     DestinationOptions = 60,
 }
 
+impl TryFrom<u8> for ExtensionHeader {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, <Self as TryFrom<u8>>::Error> {
+        match value {
+            0 => Ok(Self::HopByHop),
+            43 => Ok(Self::Routing),
+            44 => Ok(Self::Fragment),
+            60 => Ok(Self::DestinationOptions),
+            other => Err(other),
+        }
+    }
+}
+
 pub fn ipv6_header(input: &[u8]) -> IResult<&[u8], IPv6Header> {
     let (input, vtf) = be_u32(input)?;
     let (input, payload_length) = be_u16(input)?;
