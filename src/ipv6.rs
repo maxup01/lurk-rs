@@ -98,8 +98,12 @@ pub fn ipv6_packet(input: &[u8]) -> IResult<&[u8], IPv6Packet<'_>> {
 /// name a transport protocol until the chain bottoms out.
 fn skip_extension_headers(mut input: &[u8], mut next_header: u8) -> IResult<&[u8], u8> {
     loop {
-        match next_header {
-            HOP_BY_HOP | ROUTING | DESTINATION_OPTIONS => {
+        match ExtensionHeader::try_from(next_header) {
+            Ok(
+                ExtensionHeader::HopByHop
+                | ExtensionHeader::Routing
+                | ExtensionHeader::DestinationOptions,
+            ) => {
                 let (rest, header) = be_u8(input)?;
                 let (rest, hdr_ext_len) = be_u8(rest)?;
                 let (rest, _) = take(usize::from(hdr_ext_len) * 8 + 6)(rest)?;
@@ -107,14 +111,15 @@ fn skip_extension_headers(mut input: &[u8], mut next_header: u8) -> IResult<&[u8
                 next_header = header;
                 input = rest;
             }
-            FRAGMENT => {
+            // Always eight bytes, with no length field of its own.
+            Ok(ExtensionHeader::Fragment) => {
                 let (rest, header) = be_u8(input)?;
                 let (rest, _) = take(7usize)(rest)?;
 
                 next_header = header;
                 input = rest;
             }
-            other => return Ok((input, other)),
+            Err(protocol) => return Ok((input, protocol)),
         }
     }
 }
