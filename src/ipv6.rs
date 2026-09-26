@@ -23,12 +23,19 @@ pub struct IPv6Packet<'a> {
     pub payload: &'a [u8],
 }
 
-// Extension header types that can appear in the `next_header` chain before
-// reaching a transport protocol.
-const HOP_BY_HOP: u8 = 0;
-const ROUTING: u8 = 43;
-const FRAGMENT: u8 = 44;
-const DESTINATION_OPTIONS: u8 = 60;
+/// Header types that can appear in the `next_header` chain before it reaches a
+/// transport protocol.
+///
+/// These share their number space with IPv4's `protocol` field, so a value
+/// that is not a variant here is a transport protocol and ends the chain.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExtensionHeader {
+    HopByHop = 0,
+    Routing = 43,
+    Fragment = 44,
+    DestinationOptions = 60,
+}
 
 pub fn ipv6_header(input: &[u8]) -> IResult<&[u8], IPv6Header> {
     let (input, vtf) = be_u32(input)?;
