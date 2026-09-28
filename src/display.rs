@@ -2,6 +2,7 @@ use crate::{
     arp::ARPHeader,
     frame::{Frame, Network, Transport},
     icmp::{IcmpBody, IcmpPacket},
+    icmpv6::{Icmpv6Body, Icmpv6Packet, Icmpv6Type},
     ipv6::{ExtensionHeader, ExtensionHeaders},
     tcp::TcpPacket,
 };
@@ -123,7 +124,7 @@ fn source_port(transport: &Transport<'_>) -> Option<u16> {
     match transport {
         Transport::Tcp(packet) => Some(packet.header.src_port),
         Transport::Udp(packet) => Some(packet.header.src_port),
-        Transport::Icmp(_) | Transport::Unsupported { .. } => None,
+        Transport::Icmp(_) | Transport::Icmpv6(_) | Transport::Unsupported { .. } => None,
     }
 }
 
@@ -131,7 +132,7 @@ fn destination_port(transport: &Transport<'_>) -> Option<u16> {
     match transport {
         Transport::Tcp(packet) => Some(packet.header.dst_port),
         Transport::Udp(packet) => Some(packet.header.dst_port),
-        Transport::Icmp(_) | Transport::Unsupported { .. } => None,
+        Transport::Icmp(_) | Transport::Icmpv6(_) | Transport::Unsupported { .. } => None,
     }
 }
 
@@ -140,6 +141,7 @@ fn protocol_span(transport: &Transport<'_>) -> Span<'static> {
         Transport::Tcp(_) => ("TCP".to_string(), Color::Blue),
         Transport::Udp(_) => ("UDP".to_string(), Color::Cyan),
         Transport::Icmp(_) => ("ICMP".to_string(), Color::Magenta),
+        Transport::Icmpv6(_) => ("ICMPv6".to_string(), Color::LightMagenta),
         Transport::Unsupported { protocol, .. } => (format!("ip{protocol}"), Color::DarkGray),
     };
 
@@ -208,6 +210,7 @@ fn transport_info(transport: &Transport<'_>) -> Line<'static> {
             Line::from(Span::styled(format!("len={}", packet.payload.len()), dim()))
         }
         Transport::Icmp(packet) => icmp_info(packet),
+        Transport::Icmpv6(packet) => icmpv6_info(packet),
         Transport::Unsupported { payload, .. } => {
             Line::from(Span::styled(format!("{} bytes", payload.len()), dim()))
         }
@@ -262,6 +265,133 @@ fn flag_spans(flags: u16) -> Vec<Span<'static>> {
 
     spans.push(Span::styled("]", dim()));
     spans
+}
+
+fn icmpv6_info(packet: &Icmpv6Packet<'_>) -> Line<'static> {
+    let icmp_type = packet.header.icmp_type;
+
+    let colour = if (icmp_type as u8) < 128 {
+        Color::Red
+    } else {
+        Color::LightMagenta
+    };
+
+    let name = Span::styled(icmpv6_name(icmp_type), Style::new().fg(colour));
+
+    match &packet.body {
+        Icmpv6Body::Echo {
+            identifier,
+            sequence,
+            data,
+        } => Line::from(vec![
+            name,
+            Span::styled(
+                format!(" id={identifier} seq={sequence} len={}", data.len()),
+                dim(),
+            ),
+        ]),
+        Icmpv6Body::Error { quoted } => {
+            let mut spans = vec![name];
+
+            if let Some(reason) = unreachable_reason_v6(icmp_type, packet.header.code) {
+                spans.push(Span::styled(
+                    format!(" ({reason})"),
+                    Style::new().fg(colour),
+                ));
+            }
+
+            spans.push(Span::styled(
+                format!(", {} bytes quoted", quoted.len()),
+                dim(),
+            ));
+
+            Line::from(spans)
+        }
+        Icmpv6Body::PacketTooBig { mtu, quoted } => Line::from(vec![
+            name,
+            Span::styled(format!(" mtu={mtu}"), Style::new().fg(Color::Yellow)),
+            Span::styled(format!(", {} bytes quoted", quoted.len()), dim()),
+        ]),
+        Icmpv6Body::ParameterProblem { pointer, quoted } => Line::from(vec![
+            name,
+            Span::styled(
+                format!(" at byte {pointer}, {} bytes quoted", quoted.len()),
+                dim(),
+            ),
+        ]),
+        Icmpv6Body::RouterSolicitation { options } => Line::from(vec![
+            name,
+            Span::styled(format!(" ({} bytes of options)", options.len()), dim()),
+        ]),
+        Icmpv6Body::RouterAdvertisement {
+            hop_limit,
+            router_lifetime,
+            ..
+        } => Line::from(vec![
+            name,
+            Span::styled(
+                format!(" hop limit {hop_limit}, lifetime {router_lifetime}s"),
+                dim(),
+            ),
+        ]),
+        // The neighbour discovery counterparts of the ARP lines above.
+        Icmpv6Body::NeighborSolicitation { target, .. } => Line::from(vec![
+            name,
+            Span::styled(format!(" who has {target}?"), dim()),
+        ]),
+        Icmpv6Body::NeighborAdvertisement { target, .. } => Line::from(vec![
+            name,
+            Span::styled(format!(" {target} is at this host"), dim()),
+        ]),
+        Icmpv6Body::Redirect {
+            target,
+            destination,
+            ..
+        } => Line::from(vec![
+            name,
+            Span::styled(format!(" {destination} via {target}"), dim()),
+        ]),
+        Icmpv6Body::Other(raw) => Line::from(Span::styled(
+            format!(
+                "type {} code {} ({} bytes)",
+                icmp_type as u8,
+                packet.header.code,
+                raw.len()
+            ),
+            dim(),
+        )),
+    }
+}
+
+fn icmpv6_name(icmp_type: Icmpv6Type) -> &'static str {
+    match icmp_type {
+        Icmpv6Type::DestinationUnreachable => "destination unreachable",
+        Icmpv6Type::PacketTooBig => "packet too big",
+        Icmpv6Type::TimeExceeded => "time exceeded",
+        Icmpv6Type::ParameterProblem => "parameter problem",
+        Icmpv6Type::EchoRequest => "echo request",
+        Icmpv6Type::EchoReply => "echo reply",
+        Icmpv6Type::RouterSolicitation => "router solicitation",
+        Icmpv6Type::RouterAdvertisement => "router advertisement",
+        Icmpv6Type::NeighborSolicitation => "neighbour solicitation",
+        Icmpv6Type::NeighborAdvertisement => "neighbour advertisement",
+        Icmpv6Type::Redirect => "redirect",
+    }
+}
+
+fn unreachable_reason_v6(icmp_type: Icmpv6Type, code: u8) -> Option<&'static str> {
+    if icmp_type != Icmpv6Type::DestinationUnreachable {
+        return None;
+    }
+
+    match code {
+        0 => Some("no route"),
+        1 => Some("administratively prohibited"),
+        2 => Some("beyond scope"),
+        3 => Some("address unreachable"),
+        4 => Some("port unreachable"),
+        _ => None,
+    }
 }
 
 fn icmp_info(packet: &IcmpPacket<'_>) -> Line<'static> {

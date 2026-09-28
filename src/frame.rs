@@ -2,6 +2,7 @@ use crate::{
     arp::{ARPHeader, arp_packet},
     ethernet::{EtherType, EthernetHeader, ethernet_packet},
     icmp::{IcmpPacket, icmp_packet},
+    icmpv6::{Icmpv6Packet, icmpv6_packet},
     ipv4::{IPv4Header, ipv4_packet},
     ipv6::{ExtensionHeaders, IPv6Header, ipv6_packet},
     tcp::{TcpPacket, tcp_packet},
@@ -30,6 +31,7 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
                 Ok(TransportKind::Icmp) => Transport::Icmp(icmp_packet(ip.payload)?.1),
                 Ok(TransportKind::Tcp) => Transport::Tcp(tcp_packet(ip.payload)?.1),
                 Ok(TransportKind::Udp) => Transport::Udp(udp_packet(ip.payload)?.1),
+                Ok(TransportKind::Icmpv6) => Transport::Icmpv6(icmpv6_packet(ip.payload)?.1),
                 Err(protocol) => Transport::Unsupported {
                     protocol,
                     payload: ip.payload,
@@ -53,6 +55,7 @@ pub fn parse_frame(input: &[u8]) -> IResult<&[u8], Frame<'_>> {
                 Ok(TransportKind::Icmp) => Transport::Icmp(icmp_packet(ip.payload)?.1),
                 Ok(TransportKind::Tcp) => Transport::Tcp(tcp_packet(ip.payload)?.1),
                 Ok(TransportKind::Udp) => Transport::Udp(udp_packet(ip.payload)?.1),
+                Ok(TransportKind::Icmpv6) => Transport::Icmpv6(icmpv6_packet(ip.payload)?.1),
                 Err(protocol) => Transport::Unsupported {
                     protocol,
                     payload: ip.payload,
@@ -82,6 +85,7 @@ pub enum TransportKind {
     Icmp = 1,
     Tcp = 6,
     Udp = 17,
+    Icmpv6 = 58,
 }
 
 impl TryFrom<u8> for TransportKind {
@@ -92,6 +96,7 @@ impl TryFrom<u8> for TransportKind {
             1 => Ok(Self::Icmp),
             6 => Ok(Self::Tcp),
             17 => Ok(Self::Udp),
+            58 => Ok(Self::Icmpv6),
             other => Err(other),
         }
     }
@@ -124,5 +129,6 @@ pub enum Transport<'a> {
     Tcp(TcpPacket<'a>),
     Udp(UdpPacket<'a>),
     Icmp(IcmpPacket<'a>),
+    Icmpv6(Icmpv6Packet<'a>),
     Unsupported { protocol: u8, payload: &'a [u8] },
 }
