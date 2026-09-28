@@ -1,6 +1,11 @@
 use crate::icmp::IcmpHeader;
 use std::net::Ipv6Addr;
 
+pub struct Icmpv6Packet<'a> {
+    pub header: Icmpv6Header,
+    pub body: Icmpv6Body<'a>,
+}
+
 pub type Icmpv6Header = IcmpHeader;
 
 #[repr(u8)]
