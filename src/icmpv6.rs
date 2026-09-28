@@ -1,3 +1,8 @@
+use nom::{
+    IResult,
+    error::{Error, ErrorKind},
+    number::complete::{be_u8, be_u16},
+};
 use std::net::Ipv6Addr;
 
 pub struct Icmpv6Packet<'a> {
@@ -9,6 +14,24 @@ pub struct Icmpv6Header {
     pub icmp_type: Icmpv6Type,
     pub code: u8,
     pub checksum: u16,
+}
+
+pub fn icmpv6_header(input: &[u8]) -> IResult<&[u8], Icmpv6Header> {
+    let (input, icmp_type) = be_u8(input)?;
+    let (input, code) = be_u8(input)?;
+    let (input, checksum) = be_u16(input)?;
+
+    let Ok(icmp_type) = Icmpv6Type::try_from(icmp_type) else {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Verify)));
+    };
+
+    let header = Icmpv6Header {
+        icmp_type,
+        code,
+        checksum,
+    };
+
+    Ok((input, header))
 }
 
 #[repr(u8)]
