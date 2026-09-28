@@ -1,4 +1,5 @@
 use crate::icmp::IcmpHeader;
+use std::net::Ipv6Addr;
 
 pub type Icmpv6Header = IcmpHeader;
 
@@ -39,4 +40,49 @@ impl TryFrom<u8> for Icmpv6Type {
             other => Err(other),
         }
     }
+}
+
+pub enum Icmpv6Body<'a> {
+    Echo {
+        identifier: u16,
+        sequence: u16,
+        data: &'a [u8],
+    },
+    Error {
+        quoted: &'a [u8],
+    },
+    PacketTooBig {
+        mtu: u32,
+        quoted: &'a [u8],
+    },
+    ParameterProblem {
+        pointer: u32,
+        quoted: &'a [u8],
+    },
+    RouterSolicitation {
+        options: &'a [u8],
+    },
+    RouterAdvertisement {
+        hop_limit: u8,
+        flags: u8,
+        router_lifetime: u16,
+        reachable_time: u32,
+        retrans_timer: u32,
+        options: &'a [u8],
+    },
+    NeighborSolicitation {
+        target: Ipv6Addr,
+        options: &'a [u8],
+    },
+    NeighborAdvertisement {
+        flags: u8,
+        target: Ipv6Addr,
+        options: &'a [u8],
+    },
+    Redirect {
+        target: Ipv6Addr,
+        destination: Ipv6Addr,
+        options: &'a [u8],
+    },
+    Other(&'a [u8]),
 }
