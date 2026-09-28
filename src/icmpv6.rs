@@ -1,4 +1,3 @@
-use crate::icmp::IcmpHeader;
 use std::net::Ipv6Addr;
 
 pub struct Icmpv6Packet<'a> {
@@ -6,7 +5,11 @@ pub struct Icmpv6Packet<'a> {
     pub body: Icmpv6Body<'a>,
 }
 
-pub type Icmpv6Header = IcmpHeader;
+pub struct Icmpv6Header {
+    pub icmp_type: Icmpv6Type,
+    pub code: u8,
+    pub checksum: u16,
+}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
