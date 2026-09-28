@@ -237,3 +237,7 @@ fn ipv6_address(input: &[u8]) -> IResult<&[u8], Ipv6Addr> {
         Ipv6Addr::from(<[u8; 16]>::try_from(address).expect("address is 16 byte array")),
     ))
 }
+
+#[cfg(test)]
+#[path = "icmpv6_tests.rs"]
+mod tests;
