@@ -12,6 +12,15 @@ pub struct Icmpv6Packet<'a> {
     pub body: Icmpv6Body<'a>,
 }
 
+pub fn icmpv6_packet(input: &[u8]) -> IResult<&[u8], Icmpv6Packet<'_>> {
+    let (input, header) = icmpv6_header(input)?;
+    let (input, body) = icmpv6_body(header.icmp_type, input)?;
+
+    let packet = Icmpv6Packet { header, body };
+
+    Ok((input, packet))
+}
+
 pub struct Icmpv6Header {
     pub icmp_type: Icmpv6Type,
     pub code: u8,
