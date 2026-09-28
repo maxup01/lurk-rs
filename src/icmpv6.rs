@@ -1,7 +1,9 @@
 use nom::{
     IResult,
+    bytes::complete::take,
+    combinator::rest,
     error::{Error, ErrorKind},
-    number::complete::{be_u8, be_u16},
+    number::complete::{be_u8, be_u16, be_u32},
 };
 use std::net::Ipv6Addr;
 
@@ -116,4 +118,113 @@ pub enum Icmpv6Body<'a> {
         options: &'a [u8],
     },
     Other(&'a [u8]),
+}
+
+pub fn icmpv6_body(icmp_type: Icmpv6Type, input: &[u8]) -> IResult<&[u8], Icmpv6Body<'_>> {
+    match icmp_type {
+        Icmpv6Type::EchoRequest | Icmpv6Type::EchoReply => {
+            let (input, identifier) = be_u16(input)?;
+            let (input, sequence) = be_u16(input)?;
+            let (input, data) = rest(input)?;
+
+            Ok((
+                input,
+                Icmpv6Body::Echo {
+                    identifier,
+                    sequence,
+                    data,
+                },
+            ))
+        }
+        Icmpv6Type::DestinationUnreachable | Icmpv6Type::TimeExceeded => {
+            let (input, _unused) = take(4usize)(input)?;
+            let (input, quoted) = rest(input)?;
+
+            Ok((input, Icmpv6Body::Error { quoted }))
+        }
+        Icmpv6Type::PacketTooBig => {
+            let (input, mtu) = be_u32(input)?;
+            let (input, quoted) = rest(input)?;
+
+            Ok((input, Icmpv6Body::PacketTooBig { mtu, quoted }))
+        }
+        Icmpv6Type::ParameterProblem => {
+            let (input, pointer) = be_u32(input)?;
+            let (input, quoted) = rest(input)?;
+
+            Ok((input, Icmpv6Body::ParameterProblem { pointer, quoted }))
+        }
+        Icmpv6Type::RouterSolicitation => {
+            let (input, _reserved) = take(4usize)(input)?;
+            let (input, options) = rest(input)?;
+
+            Ok((input, Icmpv6Body::RouterSolicitation { options }))
+        }
+        Icmpv6Type::RouterAdvertisement => {
+            let (input, hop_limit) = be_u8(input)?;
+            let (input, flags) = be_u8(input)?;
+            let (input, router_lifetime) = be_u16(input)?;
+            let (input, reachable_time) = be_u32(input)?;
+            let (input, retrans_timer) = be_u32(input)?;
+            let (input, options) = rest(input)?;
+
+            Ok((
+                input,
+                Icmpv6Body::RouterAdvertisement {
+                    hop_limit,
+                    flags,
+                    router_lifetime,
+                    reachable_time,
+                    retrans_timer,
+                    options,
+                },
+            ))
+        }
+        Icmpv6Type::NeighborSolicitation => {
+            let (input, _reserved) = take(4usize)(input)?;
+            let (input, target) = ipv6_address(input)?;
+            let (input, options) = rest(input)?;
+
+            Ok((input, Icmpv6Body::NeighborSolicitation { target, options }))
+        }
+        Icmpv6Type::NeighborAdvertisement => {
+            let (input, flags) = be_u8(input)?;
+            let (input, _reserved) = take(3usize)(input)?;
+            let (input, target) = ipv6_address(input)?;
+            let (input, options) = rest(input)?;
+
+            Ok((
+                input,
+                Icmpv6Body::NeighborAdvertisement {
+                    flags,
+                    target,
+                    options,
+                },
+            ))
+        }
+        Icmpv6Type::Redirect => {
+            let (input, _reserved) = take(4usize)(input)?;
+            let (input, target) = ipv6_address(input)?;
+            let (input, destination) = ipv6_address(input)?;
+            let (input, options) = rest(input)?;
+
+            Ok((
+                input,
+                Icmpv6Body::Redirect {
+                    target,
+                    destination,
+                    options,
+                },
+            ))
+        }
+    }
+}
+
+fn ipv6_address(input: &[u8]) -> IResult<&[u8], Ipv6Addr> {
+    let (input, address) = take(16usize)(input)?;
+
+    Ok((
+        input,
+        Ipv6Addr::from(<[u8; 16]>::try_from(address).expect("address is 16 byte array")),
+    ))
 }
